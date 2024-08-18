@@ -21,7 +21,10 @@ jobs:
     - name: 'Install dotnet'
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '3.1.x'
+        dotnet-version: '5.x'
+
+    - name: 'Display .NET SDK Version'  # Add this step to check the installed SDK version
+      run: dotnet --version
 
     - name: 'Restore packages'
       run: dotnet restore ${{ env.PROJECT_PATH }}
