@@ -6,6 +6,9 @@ The Repository Pattern provides a way to encapsulate data access logic and abstr
 
 This repository pattern implementation leverages Entity Framework Core (EF Core) for data access. It includes a generic repository interface that defines a comprehensive set of methods for querying, adding, updating, and deleting entities.
 
+### Target Framework
+This project is built with .NET 5.0 and uses Entity Framework Core version 5.0.17.
+
 ## Repository Interface
 
 The `IRepository<T>` interface offers a wide range of methods for interacting with your data. Below is a summary of the available methods:
@@ -133,7 +136,7 @@ public class Startup
     // Other methods
 }
 ```
-## Using `FirstOrDefaultAsync` ## Using `FirstOrDefaultAsync` with predicate and order
+## Using `FirstOrDefaultAsync` with predicate and order
 
 The `FirstOrDefaultAsync` method allows you to retrieve the first record that matches specified filtering criteria and sorting order. It accepts a filtering predicate and a series of sorting criteria, which can be used to order the results.
 
