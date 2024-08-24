@@ -133,7 +133,7 @@ public class Startup
     // Other methods
 }
 ```
-## Using `FirstOrDefaultAsync`
+## Using `FirstOrDefaultAsync` ## Using `FirstOrDefaultAsync` with predicate and order
 
 The `FirstOrDefaultAsync` method allows you to retrieve the first record that matches specified filtering criteria and sorting order. It accepts a filtering predicate and a series of sorting criteria, which can be used to order the results.
 
