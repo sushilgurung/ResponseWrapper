@@ -321,5 +321,43 @@ namespace WrapperLibrary
                 return source;
             }
         }
+
+        public static IQueryable<T> OrderBy<T>(this IQueryable<T> source, List<Sorting> Sort)
+        {
+            if (Sort != null && Sort.Count > 0)
+            {
+                var stringProperties = typeof(T).GetProperties();
+                ParameterExpression parameter = Expression.Parameter(source.ElementType, "");
+
+                for (int i = 0; i < Sort.Count; i++)
+                {
+                    string columnName = Sort[i].ColumnName;
+                    if (stringProperties.Any(x => string.Equals(x.Name, columnName, StringComparison.InvariantCultureIgnoreCase)))
+                    {
+                        MemberExpression property = Expression.Property(parameter, columnName);
+                        LambdaExpression lambda = Expression.Lambda(property, parameter);
+                        string methodName = string.Empty;
+                        if (i < 1)
+                        {
+                            methodName = Sort[i].IsAscending ? "OrderBy" : "OrderByDescending";
+                        }
+                        else
+                        {
+                            methodName = Sort[i].IsAscending ? "ThenBy" : "ThenByDescending";
+                        }
+                        Expression methodCallExpression = Expression.Call(typeof(Queryable), methodName,
+                                          new Type[] { source.ElementType, property.Type },
+                                          source.Expression, Expression.Quote(lambda));
+                        source = source.Provider.CreateQuery<T>(methodCallExpression);
+                    }
+                }
+                return source;
+            }
+            else
+            {
+                return source;
+            }
+        }
+
     }
 }

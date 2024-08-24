@@ -45,10 +45,10 @@ namespace WrapperLibrary.Models
             }
             if (requestParameter.Sort != null && requestParameter.Sort.Count > 0)
             {
-                foreach (var item in requestParameter.Sort)
-                {
-                    source = ApplyOrdering.OrderBy(source, item.ColumnName, item.IsAscending);
-                }
+                //foreach (var item in requestParameter.Sort)
+                //{
+                source = ApplyOrdering.OrderBy(source, requestParameter.Sort);
+                //}
             }
             var count = await source.CountAsync();
             var items = await source.Skip((requestParameter.PageNumber - 1) * requestParameter.PageSize).Take(requestParameter.PageSize).ToListAsync();
