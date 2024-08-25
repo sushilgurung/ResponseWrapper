@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WrapperLibrary.Models
+namespace Gurung.Wrapper.Models
 {
     public class RequestParameter
     {
@@ -22,6 +22,7 @@ namespace WrapperLibrary.Models
         }
         public List<SearchParameter> search { get; set; }
         public List<Sorting> Sort { get; set; }
+        public ProjectionModel projectionModel { get; set; }
     }
     public class SearchParameter
     {

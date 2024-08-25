@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WrapperLibrary.Models
+namespace Gurung.Wrapper.Models
 {
     public class PaginatedList<T>
     {
@@ -29,8 +29,6 @@ namespace WrapperLibrary.Models
         public bool HasPreviousPage => PageNumber > 1;
 
         public bool HasNextPage => PageNumber < TotalPages;
-
-        private delegate Expression Binder(Expression left, Expression right);
 
         private static readonly MethodInfo MethodContains = typeof(Enumerable).GetMethods(
                         BindingFlags.Static | BindingFlags.Public)
@@ -55,5 +53,34 @@ namespace WrapperLibrary.Models
 
             return new PaginatedList<T>(items, count, requestParameter.PageNumber, requestParameter.PageSize);
         }
+
+
+        public static async Task<PaginatedList<T>> SelectDynamicAsync(IQueryable<T> source, RequestParameter requestParameter)
+        {
+
+            if (requestParameter.search != null && requestParameter.search.Count > 0)
+            {
+                source = ExpressionLinq.filter<T>(source, requestParameter.search);
+            }
+            if (requestParameter.Sort != null && requestParameter.Sort.Count > 0)
+            {
+                //foreach (var item in requestParameter.Sort)
+                //{
+                source = ApplyOrdering.OrderBy(source, requestParameter.Sort);
+                //}
+            }
+            var fields = "Field1, Field2, Field3";
+            source = source.SelectDynamic(requestParameter.projectionModel);
+            var count = await source.CountAsync();
+
+            var items = await source
+                .Skip((requestParameter.PageNumber - 1) * requestParameter.PageSize)
+                .Take(requestParameter.PageSize)
+                .ToListAsync();
+
+            return new PaginatedList<T>(items, count, requestParameter.PageNumber, requestParameter.PageSize);
+        }
+
+
     }
 }

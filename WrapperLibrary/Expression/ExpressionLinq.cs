@@ -1,16 +1,17 @@
-﻿using System;
+﻿using Gurung.Wrapper.Helpers;
+using Gurung.Wrapper.Models;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using WrapperLibrary.Helpers;
-using WrapperLibrary.Models;
 
-namespace WrapperLibrary
+namespace Gurung.Wrapper
 {
     public enum Comparison
     {
@@ -286,7 +287,111 @@ namespace WrapperLibrary
             }
             return expressionValue;
         }
+
+
+
+
+        //public static Expression<Func<TSource, TResult>> SelectDynamic<TSource, TResult>(this IQueryable<TSource> source, ProjectionModel projectionModel)
+        //{
+        //    if (projectionModel == null || projectionModel.Fields == null || !projectionModel.Fields.Any())
+        //    {
+        //        throw new ArgumentException("Projection model or fields cannot be null or empty.");
+        //    }
+
+        //    var parameter = Expression.Parameter(typeof(TSource), "x");
+        //    var bindings = new List<MemberAssignment>();
+
+        //    foreach (var field in projectionModel.Fields)
+        //    {
+        //        var property = typeof(TSource).GetProperty(field);
+        //        if (property == null)
+        //        {
+        //            throw new ArgumentException($"Property '{field}' does not exist on type '{typeof(TSource).Name}'.");
+        //        }
+
+        //        var propertyAccess = Expression.Property(parameter, property);
+        //        var binding = Expression.Bind(property, propertyAccess);
+        //        bindings.Add(binding);
+        //    }
+
+        //    var body = Expression.MemberInit(Expression.New(typeof(TResult)), bindings);
+        //    var selector = Expression.Lambda<Func<TSource, TResult>>(body, parameter);
+
+        //    return selector;// source.Select(selector);
+        //}
+
+
+        internal static IQueryable<T> SelectDynamic<T>(this IQueryable<T> source, ProjectionModel projectionModel)
+        {
+            if (projectionModel == null || projectionModel.Fields == null || !projectionModel.Fields.Any())
+            {
+                throw new ArgumentException("Projection model or fields cannot be null or empty.");
+            }
+
+            var parameter = Expression.Parameter(typeof(T), "x");
+            var bindings = new List<MemberAssignment>();
+            //var properties = new List<MemberExpression>();
+
+            foreach (var field in projectionModel.Fields)
+            {
+                var property = typeof(T).GetProperty(field);
+                if (property == null)
+                {
+                    throw new ArgumentException($"Property '{field}' does not exist on type '{typeof(T).Name}'.");
+                }
+
+                var propertyAccess = Expression.Property(parameter, property);
+                var binding = Expression.Bind(property, propertyAccess);
+                bindings.Add(binding);
+                // properties.Add(propertyAccess);
+            }
+
+            //var anonymousType = AnonymousTypeFactory.Create(properties.Select(p => p.Type).ToArray());
+            //var constructor = anonymousType.GetConstructor(properties.Select(p => p.Type).ToArray());
+            //var newExpression = Expression.New(constructor, properties);
+
+            //var selector = Expression.Lambda<Func<TSource, object>>(newExpression, parameter);
+            var body = Expression.MemberInit(Expression.New(typeof(T)), bindings);
+            var selector = Expression.Lambda<Func<T, T>>(body, parameter);
+
+            return source.Select(selector);
+        }
+
     }
+
+    public static class AnonymousTypeFactory
+    {
+        public static Type Create(params Type[] types)
+        {
+            return DynamicTypeBuilder.Instance.CreateNewType(types);
+        }
+    }
+
+    public class DynamicTypeBuilder
+    {
+        public static readonly DynamicTypeBuilder Instance = new DynamicTypeBuilder();
+        private readonly ModuleBuilder _moduleBuilder;
+
+        private DynamicTypeBuilder()
+        {
+            var assemblyName = new AssemblyName("DynamicTypes");
+            var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run);
+            _moduleBuilder = assemblyBuilder.DefineDynamicModule("MainModule");
+        }
+
+        public Type CreateNewType(params Type[] types)
+        {
+            var typeBuilder = _moduleBuilder.DefineType(Guid.NewGuid().ToString(), TypeAttributes.Public | TypeAttributes.Class | TypeAttributes.Serializable);
+
+            for (int i = 0; i < types.Length; i++)
+            {
+                typeBuilder.DefineField("Property" + i, types[i], FieldAttributes.Public);
+            }
+
+            return typeBuilder.CreateTypeInfo().AsType();
+        }
+    }
+
     public class ExpressionValue
     {
         public MethodInfo Method { get; set; }

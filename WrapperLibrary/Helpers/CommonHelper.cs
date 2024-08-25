@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WrapperLibrary.Helpers
+namespace Gurung.Wrapper.Helpers
 {
     public static class CommonHelper
     {

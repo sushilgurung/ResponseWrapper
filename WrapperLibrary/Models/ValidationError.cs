@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WrapperLibrary.Models
+namespace Gurung.Wrapper.Models
 {
     public class ValidationError
     {
