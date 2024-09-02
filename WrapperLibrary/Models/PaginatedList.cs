@@ -26,6 +26,15 @@ namespace Gurung.Wrapper.Models
             PageSize = pageSize;
         }
 
+        public PaginatedList(IEnumerable<T> items, int count, int pageNumber, int pageSize)
+        {
+            PageNumber = pageNumber;
+            TotalPages = (int)Math.Ceiling(count / (double)pageSize);
+            TotalCount = count;
+            Items = items.ToList();
+            PageSize = pageSize;
+        }
+
         internal bool HasPreviousPage => PageNumber > 1;
 
         internal bool HasNextPage => PageNumber < TotalPages;
@@ -65,7 +74,6 @@ namespace Gurung.Wrapper.Models
                 source = ApplyOrdering.OrderBy(source, requestParameter.Sort);
                 //}
             }
-            var fields = "Field1, Field2, Field3";
             source = source.SelectDynamic(requestParameter.projectionModel);
             var count = await source.CountAsync();
 

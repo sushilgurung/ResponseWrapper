@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Gurung.Wrapper.Wrapper
 {
-    public  class ResponseWrapper
+    public class ResponseWrapper
     {
         public ResponseWrapper()
         {
@@ -53,8 +53,13 @@ namespace Gurung.Wrapper.Wrapper
             Message = message;
         }
 
-
+        /// <summary>
+        /// 
+        /// </summary>
         public bool Success { get; set; }
+        /// <summary>
+        /// 
+        /// </summary>
         public string Message { get; set; }
 
 
@@ -64,14 +69,20 @@ namespace Gurung.Wrapper.Wrapper
         public int TotalPages { get; set; }
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public int TotalCount { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public int PageSize { get; set; }
 
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public IDictionary<string, string[]> Errors { get; set; }
 
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public List<string> ValidationMessage { get; set; }
+
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public object Data { get; set; }
+
+        internal bool IsPaged { get; set; }
+        internal bool ShowData { get; set; }
 
         public static ResponseWrapper OnSuccess(string message) =>
             new()
@@ -84,18 +95,8 @@ namespace Gurung.Wrapper.Wrapper
             {
                 Success = true,
                 Message = message,
-                Data = data
-            };
-
-        public static ResponseWrapper OnSuccess<T>(string message, PaginatedList<T> data)
-            => new()
-            {
-                Success = true,
-                Message = message,
-                Data = data.Items,
-                PageNumber = data.PageNumber,
-                TotalPages = data.TotalPages,
-                TotalCount = data.TotalCount
+                Data = data,
+                ShowData = true
             };
         public static ResponseWrapper OnError(string message) => new()
         {
@@ -103,9 +104,22 @@ namespace Gurung.Wrapper.Wrapper
             Message = message
         };
 
-        public static ResponseWrapper OnPaginatedListAsync<T>(PaginatedList<T> data, string message = "")
+        public static ResponseWrapper OnSuccess<T>(string message, PaginatedList<T> list)
+            => new()
+            {
+                Success = true,
+                Message = message,
+                Data = list.Items,
+                PageNumber = list.PageNumber,
+                TotalPages = list.TotalPages,
+                TotalCount = list.TotalCount,
+                PageSize = list.PageSize,
+                IsPaged = true,
+                ShowData = true
+            };
+
+        public static ResponseWrapper OnPaginatedListAsync<T>(PaginatedList<T> list, string message = "")
         {
-            var list = data;
             return new()
             {
                 Success = true,
@@ -113,7 +127,10 @@ namespace Gurung.Wrapper.Wrapper
                 Data = list.Items,
                 PageNumber = list.PageNumber,
                 TotalPages = list.TotalPages,
-                TotalCount = list.TotalCount
+                TotalCount = list.TotalCount,
+                PageSize = list.PageSize,
+                IsPaged = true,
+                ShowData = true
             };
         }
 
@@ -135,7 +152,12 @@ namespace Gurung.Wrapper.Wrapper
             Success = false,
             Errors = errors
         };
-        public static ResponseWrapper OnValidationError(string message, List<string> error) => new() { Success = false, Message = message, ValidationMessage = error };
+        public static ResponseWrapper OnValidationError(string message, List<string> error) => new()
+        {
+            Success = false,
+            Message = message,
+            ValidationMessage = error
+        };
 
         public static ResponseWrapper OnValidationError(IEnumerable<ValidationError> failures)
         {

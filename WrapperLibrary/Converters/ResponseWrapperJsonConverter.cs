@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Gurung.Wrapper.Wrapper;
 
-namespace Gurung.Wrapper.Wrapper
+namespace Gurung.Wrapper.Converters
 {
+    using Newtonsoft.Json.Serialization;
     using System;
     using System.Text.Json;
     using System.Text.Json.Serialization;
@@ -20,46 +22,41 @@ namespace Gurung.Wrapper.Wrapper
         public override void Write(Utf8JsonWriter writer, ResponseWrapper value, JsonSerializerOptions options)
         {
             // Get the naming policy from the options
-            JsonNamingPolicy? namingPolicy = options.PropertyNamingPolicy;
+            JsonNamingPolicy namingPolicy = options.PropertyNamingPolicy;
             bool useCamelCase = namingPolicy == JsonNamingPolicy.CamelCase;
 
             writer.WriteStartObject();
-
-            //writer.WriteBoolean("Success", value.Success);
             WriteProperty(writer, nameof(value.Success), value.Success, useCamelCase);
-
             WriteProperty(writer, nameof(value.Message), value.Message, useCamelCase);
-
-            WriteProperty(writer, nameof(value.PageNumber), value.PageNumber, useCamelCase);
-
-            WriteProperty(writer, nameof(value.TotalPages), value.TotalPages, useCamelCase);
-
-            WriteProperty(writer, nameof(value.TotalPages), value.TotalPages, useCamelCase);
-
-            WriteProperty(writer, nameof(value.TotalCount), value.TotalCount, useCamelCase);
-
-            if (value.Errors is not null)
+            if (value.IsPaged)
             {
-                writer.WritePropertyName("Errors");
+                WriteProperty(writer, nameof(value.PageNumber), value.PageNumber, useCamelCase);
+                WriteProperty(writer, nameof(value.TotalPages), value.TotalPages, useCamelCase);
+                WriteProperty(writer, nameof(value.TotalCount), value.TotalCount, useCamelCase);
+                WriteProperty(writer, nameof(value.PageSize), value.PageSize, useCamelCase);
+            }
+            if (value.Errors is not null && value.Errors.Count > 0)
+            {
+                writer.WritePropertyName(useCamelCase ? ToCamelCase(nameof(value.Errors)) : nameof(value.Errors));
                 JsonSerializer.Serialize(writer, value.Errors, options);
             }
 
             if (value.ValidationMessage is not null && value.ValidationMessage.Count > 0)
             {
-                writer.WritePropertyName("ValidationMessage");
+                writer.WritePropertyName(useCamelCase ? ToCamelCase(nameof(value.ValidationMessage)) : nameof(value.ValidationMessage));
                 JsonSerializer.Serialize(writer, value.ValidationMessage, options);
             }
 
-            if (value.Data is not null)
+            if (value.IsPaged || value.ShowData)
             {
-                writer.WritePropertyName("Data");
+                writer.WritePropertyName(useCamelCase ? ToCamelCase(nameof(value.Data)) : nameof(value.Data));
                 JsonSerializer.Serialize(writer, value.Data, value.Data.GetType(), options);
             }
 
             writer.WriteEndObject();
         }
 
-        private void WriteProperty(Utf8JsonWriter writer, string propertyName, object? value, bool useCamelCase)
+        private void WriteProperty(Utf8JsonWriter writer, string propertyName, object value, bool useCamelCase)
         {
             if (value != null && (value is not string str || !string.IsNullOrEmpty(str)))
             {
